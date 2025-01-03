@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sala de Chamada</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    let roomId = window.location.pathname.split('/').pop();
+    let userName = '';
+
+    function joinRoom() {
+      userName = document.getElementById('userName').value;
+      if (!userName) {
+        alert('Por favor, insira seu nome.');
+        return;
+      }
+
+      document.getElementById('joinForm').style.display = 'none';
+      document.getElementById('chat').style.display = 'block';
+
+      socket.emit('join-room', { roomId, userName });
+    }
+
+    function sendMessage() {
+      const message = document.getElementById('message').value;
+      if (message) {
+        socket.emit('chat message', message);
+        document.getElementById('message').value = '';
+      }
+    }
+
+    socket.on('chat message', (data) => {
+      const messages = document.getElementById('messages');
+      const newMessage = document.createElement('li');
+      newMessage.textContent = `${data.user}: ${data.text}`;
+      messages.appendChild(newMessage);
+    });
+
+    socket.on('user-joined', (msg) => {
+      const messages = document.getElementById('messages');
+      const newMessage = document.createElement('li');
+      newMessage.textContent = msg;
+      newMessage.style.fontStyle = 'italic';
+      messages.appendChild(newMessage);
+    });
+
+    socket.on('user-left', (msg) => {
+      const messages = document.getElementById('messages');
+      const newMessage = document.createElement('li');
+      newMessage.textContent = msg;
+      newMessage.style.fontStyle = 'italic';
+      messages.appendChild(newMessage);
+    });
+  </script>
+</head>
+<body>
+  <div id="joinForm">
+    <h1>Entrar na Sala</h1>
+    <label for="userName">Seu Nome:</label>
+    <input type="text" id="userName" placeholder="Insira seu nome">
+    <button onclick="joinRoom()">Entrar</button>
+  </div>
+
+  <div id="chat" style="display: none;">
+    <h1>Chat da Sala</h1>
+    <ul id="messages"></ul>
+    <input type="text" id="message" placeholder="Digite sua mensagem">
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+</body>
+</html>
