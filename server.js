@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -8,12 +9,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Configuração do banco de dados SQL Server
+// Configuração do banco de dados
 const dbConfig = {
-  user: "PMSP\44620", //usuario
-  password: '', //senha
-  server: 'PMSP02-DEV', //servidor
-  database: 'BDViniTest', //banco de dados
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER,
+  database: process.env.DB_NAME,
   options: {
     encrypt: true,
     trustServerCertificate: true,
@@ -38,8 +39,7 @@ app.get('/', (req, res) => {
 // Rota para criar uma nova sala
 app.post('/create-room', async (req, res) => {
   const { hostName } = req.body;
-  if (!hostName) {
-    console.error('Nome do host é obrigatório.');
+  if (!hostName || hostName.trim() === '') {
     return res.status(400).json({ success: false, message: 'Nome do host é obrigatório.' });
   }
 
@@ -49,7 +49,7 @@ app.post('/create-room', async (req, res) => {
   try {
     const pool = await sql.connect(dbConfig);
     await pool.request()
-      .input('name', sql.VarChar, hostName)
+      .input('name', sql.VarChar, hostName.trim())
       .input('link', sql.VarChar, roomLink)
       .query('INSERT INTO Calls (Name, Link) VALUES (@name, @link)');
 
@@ -66,17 +66,23 @@ app.get('/room/:roomId', (req, res) => {
   res.sendFile(__dirname + '/public/room.html');
 });
 
-// WebSocket para chat e eventos da sala
+// WebSocket para chat
 io.on('connection', (socket) => {
   console.log('Usuário conectado:', socket.id);
 
   socket.on('join-room', ({ roomId, userName }) => {
+    if (!roomId || !userName) {
+      return;
+    }
+
     socket.join(roomId);
     console.log(`${userName} entrou na sala ${roomId}`);
     io.to(roomId).emit('user-joined', `${userName} entrou na sala.`);
 
     socket.on('chat message', (msg) => {
-      io.to(roomId).emit('chat message', { user: userName, text: msg });
+      if (msg && msg.trim() !== '') {
+        io.to(roomId).emit('chat message', { user: userName, text: msg.trim() });
+      }
     });
 
     socket.on('disconnect', () => {
@@ -86,7 +92,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
