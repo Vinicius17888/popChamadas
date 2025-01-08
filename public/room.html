@@ -3,131 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sala de Chamada</title>
-  <script src="https://cdn.agora.io/sdk/release/AgoraRTC_N-4.12.0.js"></script>
-  <script src="https://cdn.agora.io/sdk/release/AgoraRTM_N-1.5.1.js"></script>
-  <style>
-    #local-player, #remote-player {
-      width: 640px;
-      height: 480px;
-      border: 1px solid black;
-      margin: 10px;
+  <title>Sala</title>
+  <script>
+    // Captura o ID da sala diretamente da URL
+    const roomId = window.location.pathname.split('/').pop();
+
+    // Função de inicialização
+    function initializeRoom() {
+      if (!roomId) {
+        alert('ID da sala não encontrado.');
+        return;
+      }
+
+      console.log(`Bem-vindo à sala: ${roomId}`);
+      // Adicione aqui a lógica de inicialização do Agora (RTC/RTM) ou outras funcionalidades
     }
-  </style>
+
+    window.onload = initializeRoom;
+  </script>
 </head>
 <body>
-  <h1>Sala de Vídeo e Chat</h1>
-  <div>
-    <h3>Vídeo</h3>
-    <div id="local-player"></div>
-    <div id="remote-player"></div>
-    <button onclick="joinCall()">Entrar na Chamada</button>
-    <button onclick="leaveCall()">Sair da Chamada</button>
-  </div>
-  <div>
-    <h3>Chat</h3>
-    <ul id="chat-messages"></ul>
-    <input type="text" id="message-input" placeholder="Digite sua mensagem">
-    <button onclick="sendMessage()">Enviar</button>
-  </div>
-
-  <script>
-    const appId = '8a915ae648184989b00527c25bf44580'; // Substitua pelo seu App ID do Agora.io
-    const channelName = 'main'; // Nome fixo do canal
-
-    // Configurações de RTC (Vídeo)
-    let rtc = {
-      client: null,
-      localAudioTrack: null,
-      localVideoTrack: null,
-      remoteUsers: {}
-    };
-
-    // Configurações de RTM (Chat)
-    let rtmClient = null;
-    let rtmChannel = null;
-
-    // Entrar na chamada de vídeo
-    async function joinCall() {
-      rtc.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-      await rtc.client.join(appId, channelName, null, null);
-
-      rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      rtc.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-
-      rtc.localVideoTrack.play('local-player');
-
-      await rtc.client.publish([rtc.localAudioTrack, rtc.localVideoTrack]);
-
-      console.log('Entrou na chamada de vídeo!');
-
-      rtc.client.on('user-published', async (user, mediaType) => {
-        await rtc.client.subscribe(user, mediaType);
-
-        if (mediaType === 'video') {
-          const remoteVideoTrack = user.videoTrack;
-          remoteVideoTrack.play('remote-player');
-        }
-
-        if (mediaType === 'audio') {
-          const remoteAudioTrack = user.audioTrack;
-          remoteAudioTrack.play();
-        }
-      });
-
-      rtc.client.on('user-unpublished', (user) => {
-        console.log(`${user.uid} saiu da chamada.`);
-      });
-    }
-
-    // Sair da chamada de vídeo
-    async function leaveCall() {
-      rtc.localAudioTrack.close();
-      rtc.localVideoTrack.close();
-
-      rtc.client.leave();
-
-      document.getElementById('local-player').innerHTML = '';
-      document.getElementById('remote-player').innerHTML = '';
-
-      console.log('Saiu da chamada de vídeo.');
-    }
-
-    // Entrar no chat
-    async function joinChat() {
-      rtmClient = AgoraRTM.createInstance(appId);
-      await rtmClient.login({ uid: String(Date.now()) });
-
-      rtmChannel = rtmClient.createChannel(channelName);
-      await rtmChannel.join();
-
-      console.log('Entrou no chat.');
-
-      rtmChannel.on('ChannelMessage', (message, memberId) => {
-        const chatMessages = document.getElementById('chat-messages');
-        const newMessage = document.createElement('li');
-        newMessage.textContent = `${memberId}: ${message.text}`;
-        chatMessages.appendChild(newMessage);
-      });
-    }
-
-    // Enviar mensagem no chat
-    async function sendMessage() {
-      const message = document.getElementById('message-input').value;
-      if (message) {
-        await rtmChannel.sendMessage({ text: message });
-
-        const chatMessages = document.getElementById('chat-messages');
-        const newMessage = document.createElement('li');
-        newMessage.textContent = `Você: ${message}`;
-        chatMessages.appendChild(newMessage);
-
-        document.getElementById('message-input').value = '';
-      }
-    }
-
-    // Inicializar chat ao carregar a página
-    window.onload = joinChat;
-  </script>
+  <h1>Bem-vindo à Sala</h1>
+  <p>ID da Sala: <span id="room-id"></span></p>
 </body>
 </html>

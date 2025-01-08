@@ -6,36 +6,36 @@
   <title>Criar Sala</title>
   <script>
     async function createRoom() {
-  const hostName = document.getElementById('hostName').value;
-  if (!hostName) {
-    alert('Por favor, insira o nome do host.');
-    return;
-  }
+      const hostName = document.getElementById('hostName').value;
+      if (!hostName) {
+        alert('Por favor, insira o nome do host.');
+        return;
+      }
 
-  try {
-    const response = await fetch('https://popchamadas.onrender.com/create-room', { // Substitua pelo URL do seu backend
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hostName }),
-    });
+      try {
+        const response = await fetch('https://popchamadas.onrender.com/create-room', { // Atualize para seu backend
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hostName }),
+        });
 
-    if (!response.ok) {
-      const error = await response.json();
-      alert(`Erro: ${error.message}`);
-      return;
+        if (!response.ok) {
+          const error = await response.json();
+          alert(`Erro: ${error.message}`);
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          window.location.href = data.link;
+        } else {
+          alert('Erro ao criar a sala.');
+        }
+      } catch (error) {
+        console.error('Erro ao criar sala:', error);
+        alert('Não foi possível criar a sala. Tente novamente mais tarde.');
+      }
     }
-
-    const data = await response.json();
-    if (data.success) {
-      window.location.href = data.link;
-    } else {
-      alert('Erro ao criar a sala.');
-    }
-  } catch (error) {
-    console.error('Erro ao criar sala:', error);
-    alert('Não foi possível criar a sala. Tente novamente mais tarde.');
-  }
-}
   </script>
 </head>
 <body>
